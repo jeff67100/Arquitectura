@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Arquitectura del Sistema de Cómputo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS ORIGINAL (SE MANTIENE EXACTO) -->
+  <style>
+    :root {
+      --bg: #1F2056;
+      --bg-alt: #252861;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --primary: #22d3ee;
+      --accent: #a78bfa;
+      --warn: #f5a524;
+      --card: #252861cc;
+      --border: #3a3f7a;
+      --radius: 18px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 80% -10%, #2a2f6e 0%, var(--bg) 45%),
+                  radial-gradient(900px 600px at -10% 10%, #252861 0%, var(--bg) 42%),
+                  var(--bg);
+      line-height: 1.65;
+      letter-spacing: .2px;
+    }
+
+    body::before {
+      content: "";
+      position: fixed; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0.02) 2px,
+        transparent 2px, transparent 4px
+      );
+      mix-blend-mode: soft-light;
+    }
+
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrapper { max-width: 1100px; margin: 0 auto; padding: 0 18px; }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      background: rgba(31, 32, 86, 0.95);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 14px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+      background: radial-gradient(80% 80% at 30% 30%, var(--primary), transparent 60%),
+                  radial-gradient(60% 60% at 70% 70%, var(--accent), transparent 60%),
+                  #252861;
+      box-shadow: inset 0 0 12px rgba(34, 211, 238, .35), 0 0 0 1px #1e293b;
+    }
+    .logo svg { width: 18px; height: 18px; opacity: .9; }
+
+    .title { font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: 1px; }
+
+    .menu { display: flex; gap: 18px; align-items: center; }
+    .menu a { padding: 10px 12px; border-radius: 12px; font-weight: 600; color: var(--text); cursor: pointer; }
+    .menu a:hover { background: #111827; }
+
+    .hamburger { display: none; background: none; border: 1px solid var(--border); border-radius: 12px; padding: 8px; color: var(--text); font-size: 18px; }
+
+    .hero { padding: 140px 0 40px; text-align: center; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: #252861; border: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+    .hero h1 { font-family: 'Orbitron', sans-serif; font-size: clamp(28px, 5vw, 46px); margin: 14px 0 8px; letter-spacing: .8px; }
+    .hero p { color: var(--muted); max-width: 760px; margin: 0 auto; }
+    .cta { margin-top: 20px; display: inline-flex; gap: 12px; }
+    .btn { padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border); background: #252861; color: var(--text); font-weight: 700; }
+    .btn.primary { background: linear-gradient(90deg, #0ea5e9, #22d3ee); color: #001018; border: none; box-shadow: var(--shadow); }
+
+    section { padding: 64px 0; scroll-margin-top: 80px; }
+    h2 { font-family: 'Orbitron', sans-serif; font-size: clamp(22px, 4vw, 30px); margin: 0 0 18px; }
+    h3 { font-size: 1.4rem; margin: 0 0 12px; color: var(--primary); }
+    .lead { color: var(--muted); margin-bottom: 26px; }
+
+    .grid { display: grid; gap: 18px; }
+    .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+
+    .card {
+      background: linear-gradient(180deg, rgba(16,24,39,.65), rgba(11,15,23,.65));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::after {
+      content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+      background: linear-gradient(135deg, transparent 70%, rgba(34,211,238,.08));
+      mask: linear-gradient(#000, transparent 60%);
+    }
+
+    .chip { display: inline-block; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #252861; border: 1px solid var(--border); color: var(--primary); font-weight: 700; }
+
+    .timeline { position: relative; margin-top: 16px; }
+    .timeline::before { content: ""; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, var(--primary), transparent 80%); }
+    .t-item { position: relative; padding-left: 32px; margin: 14px 0; }
+    .t-bullet { position: absolute; left: 6px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 3px rgba(34,211,238,.15); }
+    .t-year { font-weight: 800; color: var(--accent); }
+
+    .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: .95rem; background: #252861; border: 1px solid var(--border);
+      padding: 8px 10px; border-radius: 10px; color: #d1d5db;
+    }
+
+    dl { display: grid; grid-template-columns: 1fr 2.2fr; gap: 8px 16px; }
+    dt { color: var(--accent); font-weight: 800; }
+    dd { margin: 0; color: var(--text); }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-weight: 700; }
+
+    .historia-detallada { margin-top: 24px; }
+    .historia-detallada p { margin-bottom: 16px; line-height: 1.8; }
+    .historia-detallada strong { color: var(--primary); }
+    .historia-detallada em { color: var(--accent); font-style: italic; }
+
+    .ref-number {
+      color: var(--accent);
+      font-size: 0.75em;
+      vertical-align: super;
+      font-weight: 700;
+    }
+
+    .referencias-lista {
+      display: grid;
+      gap: 16px;
+      background: rgba(37, 40, 97, 0.5);
+      padding: 24px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .referencias-lista p {
+      margin: 0;
+      padding-left: 28px;
+      text-indent: -28px;
+      line-height: 1.8;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    /* Modal de referencias */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      overflow: auto;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: linear-gradient(180deg, rgba(37, 40, 97, 0.98), rgba(31, 32, 86, 0.98));
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      color: var(--primary);
+    }
+
+    .close-modal {
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--text);
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 8px;
+      transition: all 0.3s;
+      line-height: 1;
+    }
+
+    .close-modal:hover {
+      background: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+      transform: rotate(90deg);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-content::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .modal-content::-webkit-scrollbar-track {
+      background: rgba(31, 32, 86, 0.5);
+      border-radius: 5px;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 5px;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
+    }
+
+    footer { padding: 36px 0 60px; border-top: 1px solid var(--border); color: var(--muted); }
+    .small { font-size: 12px; opacity: .9; }
+
+    @media (max-width: 980px) {
+      .grid.cols-3 { grid-template-columns: 1fr 1fr; }
+      dl { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .menu { display: none; }
+      .hamburger { display: inline-flex; }
+      .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr; }
+      .hero { padding-top: 60px; }
+      main { padding-top: 80px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav class="nav wrapper" aria-label="Principal">
+      <div class="brand" aria-hidden="true">
+        <div class="logo" role="img" aria-label="Logo"></div>
+        <span class="title">Arquitectura del Computador</span>
+      </div>
+
+      <div class="menu" role="navigation" aria-label="Menú principal">
+        <a href="#inicio">Inicio</a>
+        <a href="#procesador">Procesador</a>
+        <a href="#memoria">Memoria</a>
+        <a href="#buses">Buses</a>
+        <a href="#io">I/O</a>
+        <a href="#micro">Microprocesadores</a>
+        <a id="btnReferencias" aria-haspopup="dialog">Referencias</a>
+      </div>
+
+      <button class="hamburger" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    </nav>
+  </header>
+
+  <main class="wrapper" role="main">
+    <section class="hero" id="inicio" aria-labelledby="hero-title">
+      <span class="badge">Fundamentos de Arquitectura</span>
+      <h1 id="hero-title">Componentes del Sistema de Cómputo</h1>
+      <p class="lead">Explora cómo los distintos elementos —procesador, memoria, buses y dispositivos de entrada/salida— trabajan juntos para ejecutar las tareas de un computador moderno, y revisa la historia que llevó al diseño de los microprocesadores actuales.</p>
+      <div class="cta" role="group" aria-label="Acciones">
+        <a class="btn primary" href="#procesador">Comenzar</a>
+        <a class="btn" href="#micro">Historia de Microprocesadores</a>
+      </div>
+    </section>
+
+    <!-- PROCESADOR -->
+    <section id="procesador" aria-labelledby="proc-title">
+      <h2 id="proc-title">Procesador (CPU)</h2>
+
+      <div class="card">
+        <p class="lead"><strong>Definición:</strong> La Unidad Central de Procesamiento (CPU) es el componente encargado de interpretar y ejecutar instrucciones. Se compone de unidades funcionales como la Unidad Aritmético-Lógica (ALU), la unidad de control, registros y unidades de ejecución.</p>
+
+        <h3>Subcomponentes clave</h3>
+        <dl>
+          <dt>ALU</dt>
+          <dd>Realiza operaciones aritméticas y lógicas (suma, resta, AND, OR, desplazamientos).</dd>
+
+          <dt>Unidad de control</dt>
+          <dd>Decodifica instrucciones y genera señales de control para coordinar los demás bloques (fetch, decode, execute).</dd>
+
+          <dt>Registros</dt>
+          <dd>Pequeñas memorias de acceso ultrarrápido usadas para almacenar operandos temporales y direcciones.</dd>
+
+          <dt>Pipeline</dt>
+          <dd>Técnica que divide la ejecución de instrucciones en etapas (fetch, decode, execute, memory, write-back) para aumentar el throughput.</dd>
+        </dl>
+
+        <h3>Modos de operación y paralelismo</h3>
+        <p>Los procesadores actuales soportan múltiples niveles de paralelismo: <strong>ILP</strong> (parallelismo a nivel de instrucciones) mediante pipelines y ejecución fuera de orden; <strong>Thread-level</strong> con SMT (Simultaneous Multithreading); y <strong>Data-level</strong> con SIMD (instrucciones vectoriales).</p>
+
+        <h3>Ejemplo práctico</h3>
+        <p>Considera una suma simple entre dos registros: la instrucción se obtiene de memoria (fetch), se decodifica, los operandos se leen desde registros, la ALU realiza la operación y el resultado se escribe de nuevo en un registro — todo esto en varias etapas del pipeline para maximizar rendimiento.</p>
+      </div>
+    </section>
+
+    <!-- MEMORIA -->
+    <section id="memoria" aria-labelledby="mem-title">
+      <h2 id="mem-title">Memoria</h2>
+
+      <div class="card">
+        <p class="lead"><strong>Definición:</strong> La memoria es el subsistema que guarda instrucciones y datos. Su diseño equilibra latencia, ancho de banda y capacidad mediante una jerarquía organizada.</p>
+
+        <h3>Jerarquía de memoria</h3>
+        <ul>
+          <li><strong>Registros:</strong> Acceso en un solo ciclo, capacidad mínima (bytes).</li>
+          <li><strong>Cache L1/L2/L3:</strong> Memoria cercana a la CPU para reducir latencia. L1 es la más rápida y pequeña; L3 más grande y lenta.</li>
+          <li><strong>RAM (DRAM):</strong> Memoria principal volátil (DDR, LPDDR), con mayor capacidad y latencia superior a la cache.</li>
+          <li><strong>Almacenamiento secundario:</strong> SSD/HDD para persistencia; mucho más lento pero con gran capacidad.</li>
+        </ul>
+
+        <h3>Tipos y características</h3>
+        <p><strong>DRAM:</strong> Densas y económicas por bit, requieren refresco periódico. <strong>SRAM:</strong> Usada en caches por su baja latencia (no necesita refresco), pero es más cara y menos densa.</p>
+
+        <h3>Ejemplo: impacto de la cache</h3>
+        <p>Si un algoritmo trabaja con datos que caben en L1, el rendimiento puede aumentar decenas de veces respecto a acceder a DRAM constantemente. Por eso los diseñadores optimizan la localidad espacial y temporal del software.</p>
+      </div>
+    </section>
+
+    <!-- BUSES -->
+    <section id="buses" aria-labelledby="buses-title">
+      <h2 id="buses-title">Buses del Sistema</h2>
+
+      <div class="card">
+        <p class="lead"><strong>Concepto:</strong> Un bus es un conjunto de líneas eléctricas que transportan datos, direcciones y señales de control entre componentes. Es la columna vertebral de la comunicación en la placa base.</p>
+
+        <h3>Tipos de buses</h3>
+        <ul>
+          <li><strong>Bus de datos:</strong> Transporta los datos entre CPU, memoria y periféricos (anchura típica: 8,16,32,64 bits).</li>
+          <li><strong>Bus de direcciones:</strong> Lleva direcciones de memoria; su tamaño determina el espacio de direccionamiento.</li>
+          <li><strong>Bus de control:</strong> Señales como read/write, interrupciones, reloj y handshake para coordinar transferencias.</li>
+        </ul>
+
+        <h3>Topologías y ejemplos modernos</h3>
+        <p>En computadoras modernas las topologías han evolucionado hacia interconexiones seriales y conmutadas (PCIe, AXI, AMBA) que reemplazan buses paralelos tradicionales, mejorando el ancho de banda y la escalabilidad.</p>
+
+        <h3>Ejemplo: PCI Express</h3>
+        <p>PCIe usa lanes seriales escalables; cada 'lane' es un canal full-duplex. Una GPU moderna puede usar x16 lanes para obtener alto ancho de banda hacia la memoria del sistema y dispositivos.</p>
+      </div>
+    </section>
+
+    <!-- I/O -->
+    <section id="io" aria-labelledby="io-title">
+      <h2 id="io-title">Dispositivos de Entrada y Salida (I/O)</h2>
+
+      <div class="card">
+        <p class="lead"><strong>Descripción:</strong> Los dispositivos I/O permiten la interacción entre el sistema y el mundo exterior. Incluyen entrada (teclado, sensores), salida (pantallas, actuadores) y dispositivos bidireccionales (discos, NIC).</p>
+
+        <h3>Controladores y drivers</h3>
+        <p>Los controladores (hardware) y drivers (software) gestionan la interfaz con el sistema operativo: manejo de interrupciones, DMA para transferencia eficiente, y mapeo a espacio de memoria o puertos I/O.</p>
+
+        <h3>Interrupciones vs Polling</h3>
+        <p>Las interrupciones permiten que el dispositivo notifique a la CPU cuando necesita atención (eficiente); el polling consulta periódicamente el estado del dispositivo (más simple pero consume CPU).</p>
+
+        <h3>Ejemplo: transferencia DMA</h3>
+        <p>DMA (Direct Memory Access) permite que un controlador copie bloques de memoria entre un periférico y RAM sin intervención de la CPU, reduciendo carga y latencia de procesamiento.</p>
+      </div>
+    </section>
+
+    <!-- HISTORIA DE MICROPROCESADORES -->
+    <section id="micro" aria-labelledby="micro-title">
+      <h2 id="micro-title">Historia y evolución de los microprocesadores</h2>
+
+      <div class="card historia-detallada">
+        <p class="lead"><strong>Resumen:</strong> La historia de los microprocesadores es la historia de la miniaturización, integración y crecimiento exponencial del rendimiento. A continuación se presenta una línea de tiempo concentrada con hitos clave y explicaciones técnicas.</p>
+
+        <div class="timeline" aria-hidden="false">
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1971</div>
+            <div><strong>Intel 4004</strong>: Primer microprocesador comercial. 4 bits, ~2300 transistores. Diseñado para calculadoras Busicom; introdujo el concepto de CPU en una sola pastilla.</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1974</div>
+            <div><strong>Intel 8080</strong>: 8 bits, usado en computadoras tempranas (Altair). Estableció bases para microordenadores.</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1979</div>
+            <div><strong>Motorola 68000</strong>: Arquitectura CISC 16/32 bits, ampliamente usada en estaciones de trabajo y primeras Macintosh.</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">1985–1995</div>
+            <div><strong>Transición a 32/64 bits y superscalaridad</strong>: CPUs como 80386, Pentium y posteriores introdujeron pipelines más profundos, ejecución fuera de orden, y múltiples unidades de ejecución.</div>
+          </div>
+
+          <div class="t-item">
+            <span class="t-bullet"></span>
+            <div class="t-year">2000–presente</div>
+            <div><strong>Multinúcleo, integración y eficiencia</strong>: Se adoptó el diseño multinúcleo, mejoras en procesos (nm), integración de GPUs, aceleradores de IA y foco en eficiencia energética (ARM, RISC-V, CPU heterogéneas).</div>
+          </div>
+        </div>
+
+        <h3>Impacto técnico de cada generación</h3>
+        <p>La miniaturización (Ley de Moore) permitió aumentar densidad de transistores; esto habilitó caches más grandes, pipelines complejos, y la aparición de arquitecturas heterogéneas (CPU + GPU + NPU). Además, el cambio de paradigma a diseños RISC y la aparición de ARM impulsaron dispositivos móviles.</p>
+
+        <h3>Ejemplo comparativo</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Familia</th>
+              <th>Año</th>
+              <th>Característica clave</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Intel 4004</td>
+              <td>1971</td>
+              <td>CPU en un chip (4-bit)</td>
+            </tr>
+            <tr>
+              <td>Intel 8086</td>
+              <td>1978</td>
+              <td>Inicio de la arquitectura x86</td>
+            </tr>
+            <tr>
+              <td>Motorola 68000</td>
+              <td>1979</td>
+              <td>Arquitectura CISC 16/32</td>
+            </tr>
+            <tr>
+              <td>ARM Cortex</td>
+              <td>2000s</td>
+              <td>Eficiencia para móvil (RISC)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Conclusión histórica</h3>
+        <p>Los microprocesadores pasaron de ser soluciones especializadas a plataformas generalistas capaces de ejecutar sistemas operativos completos, aplicaciones multimedia y cargas de IA. La tendencia actual es hacia la heterogeneidad y especialización por carga de trabajo.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrapper" role="contentinfo">
+    <p class="small">© 2025 Universidad de Cundinamarca - Ingeniería de Software | Elaborado por Camila González</p>
+  </footer>
+
+  <!-- MODAL REFERENCIAS -->
+  <div id="modalReferencias" class="modal" role="dialog" aria-modal="true" aria-labelledby="refs-title" aria-hidden="true">
+    <div class="modal-content" role="document">
+      <div class="modal-header">
+        <h2 id="refs-title">Referencias Bibliográficas</h2>
+        <button class="close-modal" aria-label="Cerrar referencias">&times;</button>
+      </div>
+      <div class="referencias-lista" aria-live="polite">
+        <p>[1] Tanenbaum, A. S. & Austin, T. (2012). <em>Arquitectura de computadores: un enfoque cuantitativo</em>. Pearson.</p>
+        <p>[2] Patterson, D. & Hennessy, J. (2018). <em>Computer Organization and Design</em>. Morgan Kaufmann.</p>
+        <p>[3] Stallings, W. (2019). <em>Computer Organization and Architecture</em>. Pearson Education.</p>
+        <p>[4] Intel Corporation. (2024). <em>Intel Museum - Processor History</em>. Intel.</p>
+        <p>[5] Horowitz, P. & Hill, W. (2015). <em>The Art of Electronics</em>. Cambridge University Press.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT FUNCIONAL -->
+  <script>
+    (function () {
+      // Elementos
+      const hamburger = document.querySelector('.hamburger');
+      const menu = document.querySelector('.menu');
+      const btnReferencias = document.getElementById('btnReferencias');
+      const modal = document.getElementById('modalReferencias');
+      const closeModal = document.querySelector('.close-modal');
+
+      // Menú móvil: toggle aria-expanded y display
+      hamburger.addEventListener('click', () => {
+        const isOpen = menu.style.display === 'flex';
+        menu.style.display = isOpen ? 'none' : 'flex';
+        hamburger.setAttribute('aria-expanded', String(!isOpen));
+      });
+
+      // Asegura que al redimensionar a escritorio el menu vuelva a su estado por defecto
+      window.addEventListener('resize', () => {
+        if (window.innerWidth > 680) {
+          menu.style.display = 'flex';
+          hamburger.setAttribute('aria-expanded', 'false');
+        } else {
+          if (!menu.style.display) menu.style.display = 'none';
+        }
+      });
+
+      // Abrir modal de referencias (no navega)
+      btnReferencias.addEventListener('click', (e) => {
+        e.preventDefault();
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        // cierra menú móvil si estaba abierto
+        if (window.innerWidth <= 680) {
+          menu.style.display = 'none';
+          hamburger.setAttribute('aria-expanded', 'false');
+        }
+        // focus management simple
+        closeModal.focus();
+      });
+
+      // Cerrar modal
+      closeModal.addEventListener('click', () => {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+      });
+
+      // Cerrar modal al hacer click fuera
+      window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('show');
+          modal.setAttribute('aria-hidden', 'true');
+        }
+      });
+
+      // Cerrar modal con Escape
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('show')) {
+          modal.classList.remove('show');
+          modal.setAttribute('aria-hidden', 'true');
+        }
+      });
+
+      // Scroll suave para enlaces internos (excluye el botón de referencias sin href)
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          const targetSelector = this.getAttribute('href');
+          if (!targetSelector || targetSelector === '#') return;
+          const target = document.querySelector(targetSelector);
+          if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // cierra menú movil
+            if (window.innerWidth <= 680) {
+              menu.style.display = 'none';
+              hamburger.setAttribute('aria-expanded', 'false');
+            }
+          }
+        });
+      });
+
+      // Simple scroll reveal para .card
+      const cards = document.querySelectorAll('.card');
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = 1;
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, { threshold: 0.12 });
+
+      cards.forEach(c => {
+        c.style.opacity = 0;
+        c.style.transform = 'translateY(24px)';
+        c.style.transition = 'all 0.8s cubic-bezier(.2,.9,.3,1)';
+        io.observe(c);
+      });
+    })();
+  </script>
+</body>
+</html>
